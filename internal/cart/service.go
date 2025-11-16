@@ -1,40 +1,27 @@
 package cart
 
-import "belanja-online/internal/items"
-
-type CartItem struct {
-	Item   items.Item `json:"item"`
-	Amount int        `json:"amount"`
+type CartServiceI interface {
+	Add(itemID, amount int) error
+	List() ([]CartItem, error)
+	Checkout() error
 }
 
 type CartService struct {
-	items *[]items.Item
-	cart  []CartItem
+	repo CartRepositoryI
 }
 
-func NewCartService(itemService *items.ItemService) *CartService {
-	return &CartService{
-		items: &itemService.Items,
-		cart:  []CartItem{},
-	}
+func NewCartService(repo CartRepositoryI) *CartService {
+	return &CartService{repo: repo}
 }
 
-func (s *CartService) Add(itemID, amount int) {
-	for _, it := range *s.items {
-		if it.ID == itemID {
-			s.cart = append(s.cart, CartItem{
-				Item:   it,
-				Amount: amount,
-			})
-			break
-		}
-	}
+func (s *CartService) Add(itemID, amount int) error {
+	return s.repo.Add(itemID, amount)
 }
 
-func (s *CartService) List() []CartItem {
-	return s.cart
+func (s *CartService) List() ([]CartItem, error) {
+	return s.repo.List()
 }
 
-func (s *CartService) Checkout() {
-	s.cart = []CartItem{}
+func (s *CartService) Checkout() error {
+	return s.repo.Clear()
 }

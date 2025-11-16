@@ -6,10 +6,10 @@ import (
 )
 
 type CartHandler struct {
-	service *CartService
+	service CartServiceI
 }
 
-func NewCartHandler(s *CartService) *CartHandler {
+func NewCartHandler(s CartServiceI) *CartHandler {
 	return &CartHandler{service: s}
 }
 
@@ -18,23 +18,32 @@ func (h *CartHandler) HandleAddToCart(w http.ResponseWriter, r *http.Request) {
 		ItemID int `json:"item_id"`
 		Amount int `json:"amount"`
 	}
-	json.NewDecoder(r.Body).Decode(&body)
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid body", 400)
+		return
+	}
 
-	h.service.Add(body.ItemID, body.Amount)
+	if err := h.service.Add(body.ItemID, body.Amount); err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "added to cart",
-	})
+	json.NewEncoder(w).Encode(map[string]string{"message": "added to cart"})
 }
 
 func (h *CartHandler) HandleGetCart(w http.ResponseWriter, r *http.Request) {
-	data := h.service.List()
+	data, err := h.service.List()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 	json.NewEncoder(w).Encode(data)
 }
 
 func (h *CartHandler) HandleCheckout(w http.ResponseWriter, r *http.Request) {
-	h.service.Checkout()
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "checkout success",
-	})
+	if err := h.service.Checkout(); err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	json.NewEncoder(w).Encode(map[string]string{"message": "checkout success"})
 }
