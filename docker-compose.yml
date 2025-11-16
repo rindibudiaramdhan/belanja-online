@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:15
+    container_name: belanja_pg
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: belanja
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d  # Auto-run migrations (.sql)
+    networks:
+      - belanja-net
+
+  api:
+    build: .
+    container_name: belanja_api
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_NAME: belanja
+      APP_PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - belanja-net
+
+networks:
+  belanja-net:
+
+volumes:
+  pgdata:

@@ -2,27 +2,23 @@ package db
 
 import (
 	"database/sql"
-	"log"
+	"fmt"
 	"os"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
+	_ "github.com/lib/pq"
 )
 
-func Connect() *sql.DB {
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		log.Fatal("DATABASE_URL is not set")
-	}
+func Connect() (*sql.DB, error) {
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	pass := os.Getenv("DB_PASS")
+	name := os.Getenv("DB_NAME")
 
-	db, err := sql.Open("pgx", dsn)
-	if err != nil {
-		log.Fatal("cannot open database:", err)
-	}
+	dsn := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, pass, name,
+	)
 
-	if err := db.Ping(); err != nil {
-		log.Fatal("cannot connect to database:", err)
-	}
-
-	log.Println("Connected to PostgreSQL")
-	return db
+	return sql.Open("postgres", dsn)
 }

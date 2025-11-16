@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -20,18 +21,17 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	postgres := db.Connect()
+	dbConn, err := db.Connect()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// repo
-	itemRepo := items.NewItemRepository(postgres)
-	cartRepo := cart.NewCartRepository(postgres)
-
-	// service
+	itemRepo := items.NewItemRepository(dbConn)
 	itemService := items.NewItemService(itemRepo)
-	cartService := cart.NewCartService(cartRepo)
-
-	// handler
 	itemHandler := items.NewItemHandler(itemService)
+
+	cartRepo := cart.NewCartRepository(dbConn)
+	cartService := cart.NewCartService(cartRepo)
 	cartHandler := cart.NewCartHandler(cartService)
 
 	// routes
