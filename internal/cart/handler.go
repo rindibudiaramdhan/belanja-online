@@ -37,6 +37,13 @@ func (h *CartHandler) HandleGetCart(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
+
+	// Jika data == nil, jadikan slice kosong supaya JSON -> []
+	if data == nil {
+		data = []CartItem{}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(data)
 }
 
